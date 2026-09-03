@@ -20,13 +20,36 @@ In next-generation cellular networks (5G-Advanced and 6G), managing the physical
 By replacing __rigid legacy algorithms__ with an autonomous multi-agent system deployed directly within the **gNodeB (Base Station)** split architecture, the network dynamically senses, adapts, and accelerates downlink beamforming optimization. Operating under microsecond constraints, the architecture ensures deterministic, low-latency execution while maintaining an automated, continuous MLOps loop to handle channel drift, environment shifts, and hardware anomalies.
 
 ---
+# Basic flow
+
+       +-------------------------------------------------------+
+       |                  MAC Layer (L2)                       |
+       |  - SRS Dynamic Scheduler & Resource Allocator         |
+       |  - Context Tagging (Doppler, Delay Spread, Beam ID)   |
+       +---------------------------+---------------------------+
+                                   |
+                                   v (Control & Inference Context)
++----------------------------------------------------------------------+
+|                         PHY Layer (L1 - DU/BB)                       |
+|                                                                      |
+|  +--------------------------+      +-------------------------------+ |
+|  |   Traditional Frontend   |      |      AI Core Engine           | |
+|  | - FFT / Subcarrier De-Map| ---> | - CNN/Transformer Denoising   | |
+|  | - Raw LS Estimator       |      | - Time-Frequency Interpolation| |
+|  +--------------------------+      +-------------------------------+ |
+|                                                   |                  |
++---------------------------------------------------|------------------+
+                                                    v
+                                      +--------------------------+
+                                      | Downlink Precoding / BF  |
+                                      +--------------------------+
 
 # Strategic Context
 
 ## Objectives
 * **Dynamic PHY-Layer Adaptation:** Automatically transition between high-fidelity denoising, sparse pilot extrapolation, and baseline fallback states based on real-time Channel State Information (CSI) diagnostics.
 * **Overhead and Latency Minimization:** Reduce the physical uplink pilot signal overhead while achieving near-instantaneous matrix inference within standard subframe scheduling windows.
-* **Lifecycle Automation:** Provide an enclosed, end-to-end framework that automates the collection of live radio data, triggers continuous training, enforces safety boundaries, and pushes verified weights back to edge processing units.
+* **Lifecycle Automation:** Provide an enclosed, E2E framework that automates the collection of live radio/RF data, triggers continuous training, enforces safety boundaries, and pushes verified weights back to edge processing units.
 
 ## Payoff & Benefits
 * **30%+ Downlink Throughput Gain:** Maximizes spatial multiplexing and precoding precision under poor Signal-to-Noise Ratio (SNR) or edge conditions by recovering corrupted SRS frames.
@@ -59,7 +82,7 @@ The Agentic framework is deployed directly within the **gNodeB Distributed Unit 
  │  ► STEP 1: Routing Agent (Inline FPGA / SmartNIC)      │
  │            Determines Channel State (Poor / Good)      │
  ├──────────────────────────┬─────────────────────────────┤
- │  ▼ (Poor Condition)      │ ▼ (Good Condition)          │
+ │  ▼ (Poor RF Condition)   │ ▼ (Good RF Condition)       │
  │ [ Denoising Agent ]      │ [ Extrapolation Agent ]     │
  │  (GPU / eASIC Accel)     │  (Lightweight Tensor Core)  │
  ├──────────────────────────┴─────────────────────────────┤
@@ -71,12 +94,13 @@ The Agentic framework is deployed directly within the **gNodeB Distributed Unit 
  (Runs on DU ARM/CPU Control Plane)
 ```
 OR
+
 ```
                   ┌───────────────────────────────────────────┐
                   │          Environment (gNodeB Phy)         │
                   └──────┬────────────────────────────▲───────┘
                          │ Channel Condition          │ Optimized Downlink
-                         │ (SRS, SNR, Doppler)        │ Weights & Precoding
+                         │ (SRS, SINR, Doppler)        │ Weights & Precoding
                          ▼                            │
         ┌─────────────────────────────────────────────┴─────────────────┐
         │                 COORDINATOR / ROUTING AGENT                   │
