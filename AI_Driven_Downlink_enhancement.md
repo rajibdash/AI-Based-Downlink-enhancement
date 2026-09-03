@@ -268,6 +268,8 @@ models:
 This production-grade script encapsulates the end-to-end model ingestion, training, optimization, and structural profiling lifecycle:
 
 ```python
+#!/usr/bin/env python3
+
 import os
 import time
 import numpy as np
@@ -322,6 +324,8 @@ if __name__ == "__main__":
 The lifecycle loop ensures edge weights stay continuously optimized against real-world shifts without requiring manual base station servicing.
 
 ```python
+#!/usr/bin/env python3
+
 # train_pipeline.py
 # Automated MLOps orchestration script for Channel Estimation models
 
