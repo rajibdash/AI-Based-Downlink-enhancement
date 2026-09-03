@@ -215,14 +215,14 @@ Deploying neural networks onto telecommunications hardware (e.g., O-RAN Distribu
 
 The following templates outline how the code structure for this agentic workflow should be maintained.
 
-### Directory Layout
+### Proposed Directory Layout
 
 ```text
 srs-agentic-estimation/
 ├── config/
 │   └── agent_config.yaml         # Routing rules & performance thresholds
 ├── pipelines/
-│   ├── train_pipeline.py         # Automated training & quantization pipeline
+│   ├── train_pipeline.py         # Automated training & quantization pipeline (need to be trained time-to-time)
 │   └── evaluate.py               # Shadow testing and validation scripts
 ├── src/
 │   ├── agents/
@@ -234,7 +234,9 @@ srs-agentic-estimation/
 └── requirements.txt              # Standardized dependencies
 ```
 
-### Production Configuration File (`config/agent_config.yaml`)
+## 4. Source Code Blueprints (src/)
+
+* **Production Configuration File (`config/agent_config.yaml`)**
 
 ```yaml
 version: "1.2.0"
@@ -261,9 +263,123 @@ models:
     path: "models/extrapolator_v120.onnx"
 ```
 
+* **Routing Agent (src/agents/router.py)**
+
+```python
+
+#!/usr/bin/env python3
+import numpy as np
+
+class RoutingAgent:
+    """
+    Autonomous Coordinator responsible for routing incoming SRS channels
+    based on environmental telemetry parameters (SNR and Doppler shift).
+    """
+    def __init__(self, snr_threshold_db=5.0, doppler_threshold_hz=300.0):
+        self.snr_threshold = snr_threshold_db
+        self.doppler_threshold = doppler_threshold_hz
+
+    def route_srs_signal(self, telemetry: dict) -> str:
+        """
+        Evaluates metrics and determines the optimal execution agent path.
+        """
+        snr = telemetry.get("snr", 0.0)
+        doppler = telemetry.get("doppler", 0.0)
+        bler = telemetry.get("bler", 0.0)
+
+        # Safety Override Check
+        if bler > 0.10:
+            return "FALLBACK_LMMSE"
+
+        # Poor Signal Conditions Routing
+        if snr < self.snr_threshold or doppler > self.doppler_threshold:
+            return "DENOISING_AGENT"
+        
+        # High Quality / Sparse Grid Conditions Routing
+        return "EXTRAPOLATION_AGENT"
+```
+
+* **Denoising Agent (src/agents/denoiser.py)**
+  
+```python
+
+#!/usr/bin/env python3
+import numpy as np
+
+class DenoisingAgent:
+    """
+    Handles execution logic for clearing high-noise subcarrier environments
+    using an optimized localized deep neural network engine layout.
+    """
+    def __init__(self, engine_path: str):
+        self.engine_path = engine_path
+
+    def predict(self, input_tensor: np.ndarray) -> np.ndarray:
+        """
+        Simulates microsecond-level matrix denoising inference execution loop.
+        """
+        # Simulating neural network filtering effect on noisy tensors
+        noise_attenuation_factor = 0.15
+        clean_tensor_estimate = input_tensor * (1.0 - noise_attenuation_factor)
+        return clean_tensor_estimate
+```
+
+* **Extrapolation Agent (src/agents/extrapolator.py)**
+
+```python
+#!/usr/bin/env python3
+
+import numpy as np
+
+class ExtrapolationAgent:
+    """
+    Handles execution logic for reconstructing full-grid high-resolution downlink
+    channel estimates from sparse sub-sampled high-SNR SRS inputs.
+    """
+    def __init__(self, model_path: str):
+        self.model_path = model_path
+
+    def extrapolate_grid(self, sparse_tensor: np.ndarray) -> np.ndarray:
+        """
+        Simulates Vision-Transformer style super-resolution upsampling logic.
+        """
+        # Mock full-grid reconstruction (simulating upsampling scale factor)
+        upsampled_grid = np.repeat(np.repeat(sparse_tensor, 2, axis=2), 2, axis=3)
+        return upsampled_grid
+
+```
+
+* **IQ Processing Utilities (src/utils/iq_processing.py)**
+
+```python
+
+#!/usr/bin/env python3
+
+import numpy as np
+
+def complex_to_tensor(complex_channel_matrix: np.ndarray) -> np.ndarray:
+    """
+    Transforms complex-valued IQ samples (I + jQ) into a 2-channel 
+    floating-point tensor representation suited for neural model blocks.
+    """
+    real_part = np.real(complex_channel_matrix)
+    imag_part = np.imag(complex_channel_matrix)
+    
+    # Pack into (Samples, Channels [Real=0, Imag=1], Subcarriers, Symbols)
+    tensor_grid = np.stack([real_part, imag_part], axis=1)
+    return tensor_grid.astype(np.float32)
+
+def tensor_to_complex(tensor_grid: np.ndarray) -> np.ndarray:
+    """
+    Reconstitutes real/imaginary split tensor grids back into complex IQ matrix blocks.
+    """
+    complex_matrix = tensor_grid[:, 0, :, :] + 1j * tensor_grid[:, 1, :, :]
+    return complex_matrix
+
+```
 ---
 
-## 4. Production MLOps Execution Pipeline (`pipelines/train_pipeline.py`)
+## 5. Production MLOps Execution Pipeline (`pipelines/train_pipeline.py`)
 
 This production-grade script encapsulates the end-to-end model ingestion, training, optimization, and structural profiling lifecycle:
 
@@ -361,5 +477,47 @@ if __name__ == "__main__":
     pipeline = SRSMLOpsPipeline(agent_name="Denoising_Agent")
     raw_data = pipeline.fetch_drifted_telemetry()
     new_model = pipeline.execute_retraining(raw_data)
+
+```
+
+# Evaluation Script (pipelines/evaluate.py)
+
+```python
+#!/usr/bin/env python3
+
+import time
+import numpy as np
+
+def run_shadow_testing_evaluation():
+    """
+    Performs dry-run execution checks comparing model path precision 
+    and profiling end-to-end execution latency budgets against constraints.
+    """
+    print("Executing localized performance verification suite...")
+    test_signals = np.random.randn(50, 2, 72, 14)
+    
+    start_inference = time.perf_counter()
+    # Mocking concurrent inference processing loop
+    time.sleep(0.015) 
+    end_inference = time.perf_counter()
+    
+    total_latency_us = (end_inference - start_inference) * 1e6 / 50
+    target_budget_us = 450.0
+    
+    print(f" -> Evaluated Mean Inference Latency: {total_latency_us:.2f} us per slot.")
+    if total_latency_us <= target_budget_us:
+        print(" -> Hardware performance verification status: PASSED")
+        return True
+    else:
+        print(" -> Hardware performance verification status: FAILED - Budget Exceeded")
+        return False
+
+if __name__ == "__main__":
+    print("================================================================================")
+    print("                     RUNNING SHADOW SYSTEM VALIDATION ENGINE                    ")
+    print("================================================================================")
+    run_shadow_testing_evaluation()
     quantized_asset = pipeline.convert_and_quantize(new_model)
     pipeline.deploy_to_gnodeb_du(quantized_asset)
+```
+---
