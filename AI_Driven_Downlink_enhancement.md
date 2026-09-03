@@ -351,6 +351,55 @@ class ExtrapolationAgent:
 
 ```
 
+* **Drift & Safety Agent (src/agents/drift_safety.py)**
+
+```python
+#!/usr/bin/env python3
+
+import numpy as np
+
+class DriftAndSafetyAgent:
+    """
+    Monitors live telecommunication KPIs (BLER, Channel Drift) to ensure 
+    operational integrity. Implements deterministic safety bypass rules 
+    and handles retargeting datasets back into the MLOps automation engine.
+    """
+    def __init__(self, max_allowable_bler=0.10, window_slots=1000):
+        self.max_allowable_bler = max_allowable_bler
+        self.window_slots = window_slots
+        self.bler_history = []
+        self.retraining_pool = []
+
+    def inspect_telemetry(self, current_bler: float, raw_iq_sample: np.ndarray, target_csi: np.ndarray) -> bool:
+        """
+        Appends ongoing operational metrics. Returns True if system operations 
+        are safe, or False if an immediate safety fallback is triggered.
+        """
+        self.bler_history.append(current_bler)
+        if len(self.bler_history) > self.window_slots:
+            self.bler_history.pop(0)
+
+        mean_window_bler = np.mean(self.bler_history)
+
+        # Trigger Safety Interventions if BLER violates O-RAN Service Level Budgets
+        if mean_window_bler > self.max_allowable_bler:
+            print(f"[⚠️ SAFETY ALERT] Rolling BLER ({mean_window_bler:.3f}) exceeds threshold!")
+            print("                 Forcing immediate fallback to classical LMMSE matrix math.")
+            self._stage_for_retraining(raw_iq_sample, target_csi)
+            return False 
+            
+        return True
+
+    def _stage_for_retraining(self, input_tensor: np.ndarray, target_tensor: np.ndarray):
+        """
+        Pushes environmental sample exceptions into an active MLOps buffer 
+        to combat real-world data drift (e.g., changes in seasonality or block architecture).
+        """
+        self.retraining_pool.append((input_tensor, target_tensor))
+        print(f" -> Logged drifted tensor anomaly sample to Feature Store. Retrain queue size: {len(self.retraining_pool)}")
+
+```
+
 * **IQ Processing Utilities (src/utils/iq_processing.py)**
 
 ```python
@@ -435,6 +484,7 @@ if __name__ == "__main__":
     model = train_and_optimize_agent(x, y)
     quantized_path = apply_post_training_quantization(model)
     register_and_deploy(quantized_path)
+
 ```
 
 # MLOps Pipeline Automation
