@@ -22,6 +22,7 @@ By replacing __rigid legacy algorithms__ with an autonomous multi-agent system d
 ---
 # Basic flow
 
+```
        +-------------------------------------------------------+
        |                  MAC Layer (L2)                       |
        |  - SRS Dynamic Scheduler & Resource Allocator         |
@@ -43,6 +44,7 @@ By replacing __rigid legacy algorithms__ with an autonomous multi-agent system d
                                       +--------------------------+
                                       | Downlink Precoding / BF  |
                                       +--------------------------+
+```
 
 # Strategic Context
 
