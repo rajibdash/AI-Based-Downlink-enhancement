@@ -222,16 +222,18 @@ srs-agentic-estimation/
 ├── config/
 │   └── agent_config.yaml         # Routing rules & performance thresholds
 ├── pipelines/
-│   ├── train_pipeline.py         # Automated training & quantization pipeline (need to be trained time-to-time)
+│   ├── train_pipeline.py         # Automated training & quantization pipeline
 │   └── evaluate.py               # Shadow testing and validation scripts
 ├── src/
 │   ├── agents/
 │   │   ├── router.py             # Routing Agent logic
 │   │   ├── denoiser.py           # Denoising Agent architecture
-│   │   └── extrapolator.py       # Extrapolation Agent architecture
+│   │   ├── extrapolator.py       # Extrapolation Agent architecture
+│   │   └── drift_safety.py       # Drift & Safety Agent monitor
 │   └── utils/
 │       └── iq_processing.py      # Real/Imaginary channel tensor parsing
 └── requirements.txt              # Standardized dependencies
+
 ```
 
 ## 4. Source Code Blueprints (src/)
